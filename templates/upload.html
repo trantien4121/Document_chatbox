@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Chatbox</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Document AI Chatbox</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".pdf" required>
+            <button class="btn-load" type="submit">Tải lên</button>
+        </form>
+
+        {% if file_name %}
+            <div class="file-loaded-area">
+                <h5>File đã tải lên thành công: {{ file_name }}</h5>
+            </div> 
+        {% endif %}
+
+        <h2>Typing to ask and answer from your document!</h2>
+        <form action="/ask" method="post">
+            <div class="ask-area">
+                <input type="text" name="question" placeholder="Nhập câu hỏi của bạn" required>
+                <button class="btn-ask" type="submit">
+                    <i class="fas fa-paper-plane"></i> Hỏi
+                </button>
+            </div>
+        </form>
+
+        {% if chat_history %}
+            <div class="answer-section">
+                <div class="chat-history">
+                    {% for chat in chat_history %}
+                        <div class="chat-message">
+                            <div class="question"><strong>Câu hỏi:</strong> {{ chat.question }}</div>
+                            <div class="answer"><strong>Kết quả:</strong> {{ chat.answer | safe }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+    </div>
+    
+    <script>
+        // Tìm và focus vào phần tử chứa câu trả lời gần nhất
+        const lastAnswer = document.querySelector('.chat-history .chat-message:last-child .answer');
+        if (lastAnswer) {
+            lastAnswer.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

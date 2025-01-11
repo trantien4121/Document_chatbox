@@ -1,0 +1,117 @@
+/* styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Chiều cao toàn bộ màn hình */
+}
+
+.container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 600px; /* Đặt chiều rộng cố định cho khung */
+    max-height: 80vh; /* Chiều cao tối đa của khung */
+    overflow-y: auto; /* Thêm cuộn dọc khi nội dung vượt quá chiều cao */
+}
+
+h1, h2, h3 {
+    color: #333;
+    text-align: center; /* Căn giữa tiêu đề */
+}
+
+form {
+    margin: 20px 0; /* Khoảng cách giữa các form */
+}
+
+input[type="file"],
+input[type="text"],
+button.btn-load{
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: calc(100% - 22px); /* Chiều rộng 100% trừ đi padding */
+    box-sizing: border-box; /* Đảm bảo padding được tính vào chiều rộng */
+}
+
+button {
+    background-color: #5cb85c;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #4cae4c;
+}
+
+button.btn-ask {
+    display: flex;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    align-items: center;
+    margin-left: 5px;
+}
+button i {
+    margin-right: 5px;
+}
+
+.ask-area {
+    display: flex;
+    width: calc(100% - 22px);
+}
+
+h2 {
+    margin-top: 40px;
+}
+
+.file-loaded-area {
+    width: calc(100% - 22px);
+    display: flex;
+    justify-content: center;
+}
+
+.answer-section {
+    max-height: 300px; /* Chiều cao tối đa cho phần câu trả lời */
+    overflow-y: auto; /* Thêm cuộn dọc cho phần câu trả lời */
+    padding: 10px;
+    background: #f9f9f9; /* Màu nền cho phần câu trả lời */
+    border-radius: 5px;
+    margin-top: 10px; /* Khoảng cách giữa câu hỏi và câu trả lời */
+    border: 1px solid #ddd; /* Đường viền cho phần câu trả lời */
+}
+
+/* Định dạng cho phần hỏi và trả lời */
+.question {
+    background-color: #d1e7dd; /* Màu nền cho câu hỏi */
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px 0 20px 0; /* Khoảng cách giữa các câu hỏi */
+    position: relative; /* Để có thể sử dụng pseudo-element */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Bóng đổ cho câu hỏi */
+    width: 60%
+}
+
+.answer {
+    background-color: #f8d7da; /* Màu nền cho câu trả lời */
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px 0; /* Khoảng cách giữa các câu trả lời */
+    position: relative; /* Để có thể sử dụng pseudo-element */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Bóng đổ cho câu trả lời */
+}
+
+/* Định dạng cho chat history */
+.chat-history {
+    display: flex;
+    flex-direction: column; /* Căn chỉnh theo chiều dọc */
+}
