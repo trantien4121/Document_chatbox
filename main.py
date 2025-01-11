@@ -38,8 +38,15 @@ parsed_content = ""
 uploaded_file_name = ""
 chat_history = []  # Danh sách lưu trữ câu hỏi và câu trả lời
 
+def reset_globals(): 
+    global parsed_content, uploaded_file_name, chat_history 
+    parsed_content = "" 
+    uploaded_file_name = "" 
+    chat_history = []
+
 @app.route('/')
 def upload_form():
+    reset_globals()
     return render_template('upload.html', answer=None, file_name=None, chat_history=chat_history)
 
 @app.route('/upload', methods=['POST'])
