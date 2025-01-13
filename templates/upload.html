@@ -10,18 +10,27 @@
 <body>
     <div class="container">
         <h1>Document AI Chatbox</h1>
+        <h5 style="margin-bottom: -20px;">Chọn file (có thể chọn nhiều file):</h5>
         <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="file" accept=".pdf" required>
+            <input type="file" name="files" accept=".pdf" multiple required>
             <button class="btn-load" type="submit">Tải lên</button>
         </form>
 
-        {% if file_name %}
+        {% if file_names %}
             <div class="file-loaded-area">
-                <h5>File đã tải lên thành công: {{ file_name }}</h5>
+                <h5 style="margin-bottom: -5px ; color: green">
+                    <i class="fas fa-check" style="margin-right: 10px;"></i>
+                    File đã tải lên thành công:
+                </h5>
+                <ul>
+                    {% for file_name in file_names %}
+                        <li>{{ file_name }}</li>
+                    {% endfor %}
+                </ul>
             </div> 
         {% endif %}
 
-        <h2>Typing to ask and answer from your document!</h2>
+        <h2>Typing to ask and answer from your documents!</h2>
         <form action="/ask" method="post">
             <div class="ask-area">
                 <input type="text" name="question" placeholder="Nhập câu hỏi của bạn" required>
@@ -37,7 +46,14 @@
                     {% for chat in chat_history %}
                         <div class="chat-message">
                             <div class="question"><strong>Câu hỏi:</strong> {{ chat.question }}</div>
-                            <div class="answer"><strong>Kết quả:</strong> {{ chat.answer | safe }}</div>
+                            <div class="answer">
+                                <strong>Kết quả:</strong>
+                                <ul>
+                                    {% for answer in chat.answers %}
+                                        <li>{{ answer | safe }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
                         </div>
                     {% endfor %}
                 </div>

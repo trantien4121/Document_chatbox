@@ -76,7 +76,7 @@ h2 {
 
 .file-loaded-area {
     width: calc(100% - 22px);
-    display: flex;
+    display: block;
     justify-content: center;
 }
 

@@ -1,31 +1,7 @@
-
-from datetime import datetime
-
 from GeminiAI import GeminiAI
 from ResumeParser import ResumeParser
-from flask import Flask, request, render_template, send_from_directory
+from flask import Flask, request, render_template
 import os
-import re
-
-# def main():
-#     # Initialize the GeminiAI and ResumeParser classes
-#     gemini = GeminiAI.get_instance()
-#     parser = ResumeParser(gemini)
-
-#     # # test time to parse a resume
-#     # start = datetime.now()
-
-#     file_path = "resources/input/Li_thuyet_Hadoop.pdf"
-#     content = parser.extract_text_from_pdf(file_path)
-#     # print(explanation)
-
-#     # print("Time taken:", datetime.now() - start)
-#     # ## average time taken: 0:00:02.5 seconds
-#     awn = gemini.explain_resume(content, "Apache Zookeeper là gì?")
-#     print(awn)
-
-# if __name__ == "__main__":
-#     main()
 
 app = Flask(__name__, static_url_path='/static')
 uploads_dir = os.path.join("resources", "input")
@@ -44,54 +20,77 @@ def reset_globals():
     uploaded_file_name = "" 
     chat_history = []
 
+def delete_all_files_in_directory(directory):
+    # check if exist
+    if os.path.exists(directory) and os.path.isdir(directory):
+        for filename in os.listdir(directory):
+            file_path = os.path.join(directory, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                print(f"Đã xóa: {file_path}")
+    else:
+        print(f"Thư mục không tồn tại: {directory}")
+
 @app.route('/')
 def upload_form():
+    delete_all_files_in_directory(uploads_dir)
     reset_globals()
-    return render_template('upload.html', answer=None, file_name=None, chat_history=chat_history)
+    return render_template('upload.html', answers=None, file_names=None, chat_history=chat_history)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    global parsed_content, uploaded_file_name
+    global parsed_content, uploaded_file_names
 
-    if 'file' not in request.files:
+    if 'files' not in request.files:
         return "Không có file nào được chọn", 400
 
-    file = request.files['file']
-    if file.filename == '':
+    files = request.files.getlist('files')
+    if not files or all(file.filename == '' for file in files):
         return "Không có file nào được chọn", 400
 
-    if file and file.filename.endswith('.pdf'):
-        file_path = os.path.join(uploads_dir, file.filename)
-        file.save(file_path)
+    uploaded_file_names = []
+    parsed_content = []
 
-        # Khởi tạo GeminiAI và ResumeParser
-        gemini = GeminiAI.get_instance()
-        parser = ResumeParser(gemini)
+    for file in files:
+        if file and file.filename.endswith('.pdf'):
+            file_path = os.path.join(uploads_dir, file.filename)
+            file.save(file_path)
 
-        # Phân tích nội dung file PDF
-        parsed_content = parser.extract_text_from_pdf(file_path)
-        
-        # Lưu tên file đã tải lên
-        uploaded_file_name = file.filename
-        
-        return render_template('upload.html', answer=None, file_name=uploaded_file_name, chat_history=chat_history)
+            # Khởi tạo GeminiAI và ResumeParser
+            gemini = GeminiAI.get_instance()
+            parser = ResumeParser(gemini)
 
-    return "Định dạng file không hợp lệ", 400
+            # Phân tích nội dung file PDF
+            content = parser.extract_text_from_pdf(file_path)
+            parsed_content.append(content)
+            
+            # Lưu tên file đã tải lên
+            uploaded_file_names.append(file.filename)
+
+    if not uploaded_file_names:
+        return "Định dạng file không hợp lệ", 400
+
+    return render_template('upload.html', answers=None, file_names=uploaded_file_names, chat_history=chat_history)
+
 
 @app.route('/ask', methods=['POST'])
 def ask_question():
-    global parsed_content, chat_history, uploaded_file_name
+    global parsed_content, chat_history, uploaded_file_names
 
     question = request.form['question']
     if parsed_content:
         gemini = GeminiAI.get_instance()
-        answer = format_answer(gemini.explain_resume(parsed_content, question))
-        print(answer);
+        answers = []
+
+        for content in parsed_content:
+            answer = format_answer(gemini.explain_resume(content, question))
+            print(answer);
+            answers.append(answer)
 
         # Lưu câu hỏi và câu trả lời vào lịch sử chat
-        chat_history.append({'question': question, 'answer': answer})
+        chat_history.append({'question': question, 'answers': answers})
 
-        return render_template('upload.html', answer=None, file_name=uploaded_file_name, chat_history=chat_history)
+        return render_template('upload.html', answers=answers, file_names=uploaded_file_names, chat_history=chat_history)
 
     return "Chưa có nội dung nào được phân tích.", 400
 
