@@ -6,11 +6,12 @@
     <title>Custom Chatbox</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='uploads.css') }}">
 </head>
 <body>
     <div class="container">
         <h1>Document AI Chatbox</h1>
-        <h5 style="margin-bottom: -20px;">Chọn file (có thể chọn nhiều file):</h5>
+        <!-- <h5 style="margin-bottom: -20px;">Chọn file (có thể chọn nhiều file):</h5>
         <form action="/upload" method="post" enctype="multipart/form-data">
             <input type="file" name="files" accept=".pdf" multiple required>
             <button class="btn-load" type="submit">Tải lên</button>
@@ -28,14 +29,27 @@
                     {% endfor %}
                 </ul>
             </div> 
-        {% endif %}
+        {% endif %} -->
+
+        <form action="/upload" method="post" enctype="multipart/form-data" id="uploadForm">
+            <div class="file-upload" onclick="document.getElementById('fileInput').click();">
+                <input type="file" id="fileInput" name="files" accept=".pdf" multiple required onchange="showFileNames(this.files)">
+                <div class="upload-text">Click or Drag files to upload</div>
+                <div class="file-names" id="fileNames"></div>
+                <div class="button-container">
+                    <button type="button" class="button" onclick="addMoreFiles(event)">
+                        <i class="fas fa-plus"></i> Add More
+                    </button>
+                </div>
+            </div>
+        </form>
 
         <h2>Typing to ask and answer from your documents!</h2>
         <form action="/ask" method="post">
             <div class="ask-area">
                 <input type="text" name="question" placeholder="Nhập câu hỏi của bạn" required>
                 <button class="btn-ask" type="submit">
-                    <i class="fas fa-paper-plane"></i> Hỏi
+                    <i class="fas fa-paper-plane"></i> Ask
                 </button>
             </div>
         </form>
@@ -68,6 +82,90 @@
         if (lastAnswer) {
             lastAnswer.scrollIntoView({ behavior: 'smooth' });
         }
+
+        /*Custom upload file*/
+        const fileNamesDiv = document.getElementById('fileNames');
+        const fileInput = document.getElementById('fileInput');
+        const uploadForm = document.getElementById('uploadForm');
+        let selectedFiles = [];
+
+        function initialize() {
+            const storedFiles = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
+            storedFiles.forEach(fileName => {
+                // Tạo một file giả với tên file đã lưu
+                selectedFiles.push(new File([], fileName)); // Đây chỉ là để hiển thị tên
+            });
+            displayFileNames();
+            updateFileInput();
+        }
+
+        function saveFilesToLocalStorage() {
+            const fileNames = selectedFiles.map(file => file.name);
+            localStorage.setItem('uploadedFiles', JSON.stringify(fileNames));
+        }
+
+        function showFileNames(files) {
+            for (let file of files) {
+                selectedFiles.push(file);
+            }
+            displayFileNames();
+            updateFileInput();
+            saveFilesToLocalStorage(); // Lưu file vào localStorage ngay sau khi thêm file mới
+            uploadFiles(); // Tự động gửi form mỗi khi có file mới
+        }
+
+        function displayFileNames() {
+            fileNamesDiv.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                fileNamesDiv.innerHTML += `
+                    <div class="file-item">
+                        <span>${file.name}</span>
+                        <button class="remove-button" onclick="removeFile(${index}); event.stopPropagation();">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>`;
+            });
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFileNames();
+            updateFileInput(); 
+            saveFilesToLocalStorage(); // Lưu file vào localStorage sau khi xóa
+            uploadFiles(); // Tự động gửi form sau khi xóa file
+        }
+
+        function addMoreFiles(event) {
+            event.stopPropagation(); // Ngăn chặn sự kiện lan truyền
+            fileInput.click();
+        }
+
+        function updateFileInput() {
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach(file => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files; // Cập nhật files trong input
+        }
+
+        function uploadFiles() {
+            const formData = new FormData(uploadForm);
+            fetch(uploadForm.action, {
+                method: uploadForm.method,
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log("Files uploaded successfully.");
+                    displayFileNames(); // Cập nhật lại giao diện
+                } else {
+                    console.error("Upload failed.");
+                }
+            })
+            .catch(error => {
+                console.error("Error uploading files:", error);
+            });
+        }
+        // Khởi tạo khi trang được tải
+        initialize();
     </script>
 </body>
 </html>

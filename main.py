@@ -66,6 +66,8 @@ def upload_file():
             
             # Lưu tên file đã tải lên
             uploaded_file_names.append(file.filename)
+            print(file.filename)
+            print("===> Parsed_content size: ", len(parsed_content))
 
     if not uploaded_file_names:
         return "Định dạng file không hợp lệ", 400
