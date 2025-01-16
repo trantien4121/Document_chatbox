@@ -47,7 +47,7 @@
         <h2>Typing to ask and answer from your documents!</h2>
         <form action="/ask" method="post">
             <div class="ask-area">
-                <input type="text" name="question" placeholder="Nhập câu hỏi của bạn" required>
+                <input type="text" name="question" placeholder="Nhập câu hỏi của bạn" id="question-input" required disabled>
                 <button class="btn-ask" type="submit">
                     <i class="fas fa-paper-plane"></i> Ask
                 </button>
@@ -87,6 +87,7 @@
         const fileNamesDiv = document.getElementById('fileNames');
         const fileInput = document.getElementById('fileInput');
         const uploadForm = document.getElementById('uploadForm');
+        const questionInputArea = document.getElementById('question-input');
         let selectedFiles = [];
 
         function initialize() {
@@ -186,6 +187,7 @@
                     console.log("Files uploaded successfully.");
                     saveFilesToLocalStorage();
                     displayFileNames(); // Cập nhật lại giao diện
+                    questionInputArea.disabled = false
                 } else {
                     console.error("Upload failed.");
                 }
