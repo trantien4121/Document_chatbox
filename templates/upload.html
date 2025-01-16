@@ -91,26 +91,55 @@
 
         function initialize() {
             const storedFiles = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
-            storedFiles.forEach(fileName => {
-                // Tạo một file giả với tên file đã lưu
-                selectedFiles.push(new File([], fileName)); // Đây chỉ là để hiển thị tên
+            selectedFiles = storedFiles.map(fileStored => {
+                const byteString = atob(fileStored.content.split(',')[1]); // Giải mã nội dung
+                const mimeString = fileStored.content.split(',')[0].split(':')[1].split(';')[0]; // Lấy kiểu MIME
+                const arrayBuffer = new Uint8Array(byteString.length);
+                
+                for (let i = 0; i < byteString.length; i++) {
+                    arrayBuffer[i] = byteString.charCodeAt(i);
+                }
+
+                const blob = new Blob([arrayBuffer], { type: mimeString }); // Tạo Blob từ ArrayBuffer
+                return new File([blob], fileStored.name, { type: fileStored.type, size: fileStored.size });
             });
             displayFileNames();
             updateFileInput();
-        }
+        }   
 
         function saveFilesToLocalStorage() {
-            const fileNames = selectedFiles.map(file => file.name);
-            localStorage.setItem('uploadedFiles', JSON.stringify(fileNames));
+            const fileDataPromises = selectedFiles.map(file => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        resolve({
+                            name: file.name,
+                            type: file.type,
+                            size: file.size,
+                            content: event.target.result // Nội dung file
+                        });
+                    };
+                    reader.readAsDataURL(file); // Đọc file dưới dạng Data URL
+                });
+            });
+
+            Promise.all(fileDataPromises).then(fileData => {
+                localStorage.setItem('uploadedFiles', JSON.stringify(fileData));
+            });
         }
 
+        function saveFilesToIndexedDB() {
+            selectedFiles.forEach(file => {
+                saveFileToIndexedDB(file);
+            });
+        }
         function showFileNames(files) {
             for (let file of files) {
                 selectedFiles.push(file);
             }
             displayFileNames();
             updateFileInput();
-            saveFilesToLocalStorage(); // Lưu file vào localStorage ngay sau khi thêm file mới
+            saveFilesToLocalStorage(); // Lưu file vào localStorage ngay sau khi thêm file mới (có thể ko cần)
             uploadFiles(); // Tự động gửi form mỗi khi có file mới
         }
 
@@ -155,6 +184,7 @@
             .then(response => {
                 if (response.ok) {
                     console.log("Files uploaded successfully.");
+                    saveFilesToLocalStorage();
                     displayFileNames(); // Cập nhật lại giao diện
                 } else {
                     console.error("Upload failed.");
