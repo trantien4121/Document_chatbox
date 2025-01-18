@@ -5,32 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Custom Chatbox</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"> <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='uploads.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Document AI Chatbox</h1>
-        <!-- <h5 style="margin-bottom: -20px;">Chọn file (có thể chọn nhiều file):</h5>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="files" accept=".pdf" multiple required>
-            <button class="btn-load" type="submit">Tải lên</button>
-        </form>
-
-        {% if file_names %}
-            <div class="file-loaded-area">
-                <h5 style="margin-bottom: -5px ; color: green">
-                    <i class="fas fa-check" style="margin-right: 10px;"></i>
-                    File đã tải lên thành công:
-                </h5>
-                <ul>
-                    {% for file_name in file_names %}
-                        <li>{{ file_name }}</li>
-                    {% endfor %}
-                </ul>
-            </div> 
-        {% endif %} -->
-
+        <h1 style="padding: 10px 0;">Document AI Chatbox</h1>
         <form action="/upload" method="post" enctype="multipart/form-data" id="uploadForm">
             <div class="file-upload" onclick="document.getElementById('fileInput').click();">
                 <input type="file" id="fileInput" name="files" accept=".pdf" multiple required onchange="showFileNames(this.files)">
@@ -44,10 +25,10 @@
             </div>
         </form>
 
-        <h2>Typing to ask and answer from your documents!</h2>
-        <form action="/ask" method="post">
+        <h3 style="padding: 20px 0 10px 0">Typing to ask and answer from your documents!</h3>
+        <form action="/ask" method="post" id="askForm">
             <div class="ask-area">
-                <input type="text" name="question" placeholder="Nhập câu hỏi của bạn" id="question-input" required disabled>
+                <input type="text" name="question" placeholder="Nhập câu hỏi của bạn" required>
                 <button class="btn-ask" type="submit">
                     <i class="fas fa-paper-plane"></i> Ask
                 </button>
@@ -73,9 +54,31 @@
                 </div>
             </div>
         {% endif %}
-        
+
+        <footer>
+            <p>Copyright © 2025 YouTu Tu, Inc.All rights reserved.</p>
+        </footer>
     </div>
-    
+
+    <!-- Overlay để làm mờ container -->
+    <div class="overlay" id="overlay">
+        <div>File đang trong quá trình tải lên...</div>
+    </div>
+
+    <!-- Toast thông báo -->
+    <div class="toast" id="uploadToast" style="display: none;" data-delay="3000">
+        <div class="toast-body" id="toastBody"style="color: white">
+            Upload successfully!
+            <button type="button" class="close" aria-label="Close" onclick="$('#uploadToast').hide();">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
     <script>
         // Tìm và focus vào phần tử chứa câu trả lời gần nhất
         const lastAnswer = document.querySelector('.chat-history .chat-message:last-child .answer');
@@ -83,64 +86,63 @@
             lastAnswer.scrollIntoView({ behavior: 'smooth' });
         }
 
-        /*Custom upload file*/
+        /* Custom upload file */
         const fileNamesDiv = document.getElementById('fileNames');
         const fileInput = document.getElementById('fileInput');
         const uploadForm = document.getElementById('uploadForm');
-        const questionInputArea = document.getElementById('question-input');
+        const askForm = document.getElementById('askForm');
+        const overlay = document.getElementById('overlay');
+        const uploadToast = $('#uploadToast'); // Toast thông báo
         let selectedFiles = [];
+        let db;
 
-        function initialize() {
-            const storedFiles = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
-            selectedFiles = storedFiles.map(fileStored => {
-                const byteString = atob(fileStored.content.split(',')[1]); // Giải mã nội dung
-                const mimeString = fileStored.content.split(',')[0].split(':')[1].split(';')[0]; // Lấy kiểu MIME
-                const arrayBuffer = new Uint8Array(byteString.length);
-                
-                for (let i = 0; i < byteString.length; i++) {
-                    arrayBuffer[i] = byteString.charCodeAt(i);
-                }
-
-                const blob = new Blob([arrayBuffer], { type: mimeString }); // Tạo Blob từ ArrayBuffer
-                return new File([blob], fileStored.name, { type: fileStored.type, size: fileStored.size });
-            });
-            displayFileNames();
-            updateFileInput();
-        }   
-
-        function saveFilesToLocalStorage() {
-            const fileDataPromises = selectedFiles.map(file => {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        resolve({
-                            name: file.name,
-                            type: file.type,
-                            size: file.size,
-                            content: event.target.result // Nội dung file
-                        });
-                    };
-                    reader.readAsDataURL(file); // Đọc file dưới dạng Data URL
-                });
-            });
-
-            Promise.all(fileDataPromises).then(fileData => {
-                localStorage.setItem('uploadedFiles', JSON.stringify(fileData));
-            });
+        // Khởi tạo IndexedDB
+        function initIndexedDB() {
+            const request = indexedDB.open("FileStorage", 1);
+            request.onupgradeneeded = function(event) {
+                db = event.target.result;
+                db.createObjectStore("files", { keyPath: "name" });
+            };
+            request.onsuccess = function(event) {
+                db = event.target.result;
+                loadFilesFromIndexedDB(); // Tải file từ IndexedDB
+            };
+            request.onerror = function(event) {
+                console.error("Error opening IndexedDB:", event);
+            };
         }
 
-        function saveFilesToIndexedDB() {
-            selectedFiles.forEach(file => {
-                saveFileToIndexedDB(file);
-            });
+        // Lưu file vào IndexedDB
+        function saveFileToIndexedDB(file) {
+            const transaction = db.transaction(["files"], "readwrite");
+            const objectStore = transaction.objectStore("files");
+            const fileData = {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                content: file // Lưu file dưới dạng đối tượng
+            };
+            objectStore.put(fileData);
         }
+
+        // Tải file từ IndexedDB
+        function loadFilesFromIndexedDB() {
+            const transaction = db.transaction(["files"], "readonly");
+            const objectStore = transaction.objectStore("files");
+            const request = objectStore.getAll();
+            request.onsuccess = function(event) {
+                selectedFiles = event.target.result.map(fileStored => fileStored.content);
+                displayFileNames();
+            };
+        }
+
         function showFileNames(files) {
             for (let file of files) {
                 selectedFiles.push(file);
+                saveFileToIndexedDB(file); // Lưu file vào IndexedDB ngay sau khi thêm file mới
             }
             displayFileNames();
             updateFileInput();
-            saveFilesToLocalStorage(); // Lưu file vào localStorage ngay sau khi thêm file mới (có thể ko cần)
             uploadFiles(); // Tự động gửi form mỗi khi có file mới
         }
 
@@ -158,11 +160,35 @@
         }
 
         function removeFile(index) {
+            const fileName = selectedFiles[index].name;
             selectedFiles.splice(index, 1);
             displayFileNames();
             updateFileInput(); 
-            saveFilesToLocalStorage(); // Lưu file vào localStorage sau khi xóa
+            deleteFileFromIndexedDB(fileName); // Xóa file khỏi IndexedDB
+            deleteFileFromDirectory(fileName); // Xóa file khỏi thư mục lưu trữ
             uploadFiles(); // Tự động gửi form sau khi xóa file
+        }
+
+        function deleteFileFromIndexedDB(fileName) {
+            const transaction = db.transaction(["files"], "readwrite");
+            const objectStore = transaction.objectStore("files");
+            objectStore.delete(fileName);
+        }
+
+        function deleteFileFromDirectory(fileName) {
+            fetch(`/delete_file?filename=${fileName}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log(`File ${fileName} đã được xóa khỏi thư mục.`);
+                } else {
+                    console.error(`Không thể xóa file ${fileName}.`);
+                }
+            })
+            .catch(error => {
+                console.error("Lỗi khi xóa file:", error);
+            });
         }
 
         function addMoreFiles(event) {
@@ -178,26 +204,42 @@
 
         function uploadFiles() {
             const formData = new FormData(uploadForm);
+            overlay.style.display = 'flex'; // Hiển thị overlay làm mờ container
+
+            // Vô hiệu hóa form trước khi tải lên
+            askForm.querySelector('button[type="submit"]').disabled = true;
+
             fetch(uploadForm.action, {
                 method: uploadForm.method,
                 body: formData
             })
             .then(response => {
+                overlay.style.display = 'none'; // Ẩn overlay
                 if (response.ok) {
-                    console.log("Files uploaded successfully.");
-                    saveFilesToLocalStorage();
+                    showToast("Upload successfully!"); // Hiển thị thông báo toast
                     displayFileNames(); // Cập nhật lại giao diện
-                    questionInputArea.disabled = false
+                    askForm.querySelector('button[type="submit"]').disabled = false; // Kích hoạt lại form hỏi
                 } else {
-                    console.error("Upload failed.");
+                    console.error("Upload failed!");
+                    showToast("Upload failed!!", "bg-danger"); // Hiển thị thông báo lỗi
                 }
             })
             .catch(error => {
+                overlay.style.display = 'none'; // Ẩn overlay
                 console.error("Error uploading files:", error);
+                showToast("Lỗi khi tải lên!", "bg-danger"); // Hiển thị thông báo lỗi
             });
         }
+
+        function showToast(message, type = "bg-success") {
+            $('#toastBody').text(message);
+            uploadToast.removeClass("bg-success bg-danger").addClass(type);
+            uploadToast.show(); // Hiển thị toast
+            uploadToast.toast('show'); // Hiển thị toast
+        }
+
         // Khởi tạo khi trang được tải
-        initialize();
+        initIndexedDB();
     </script>
 </body>
 </html>

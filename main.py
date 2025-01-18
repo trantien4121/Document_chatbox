@@ -21,13 +21,26 @@ def reset_globals():
     chat_history = []
 
 def delete_all_files_in_directory(directory):
-    # check if exist
+    # check if exists
     if os.path.exists(directory) and os.path.isdir(directory):
         for filename in os.listdir(directory):
             file_path = os.path.join(directory, filename)
             if os.path.isfile(file_path):
                 os.remove(file_path)
                 print(f"Đã xóa: {file_path}")
+    else:
+        print(f"Thư mục không tồn tại: {directory}")
+
+def delete_file_in_directory(directory, filename):
+    # check folder if exist
+    if os.path.exists(directory) and os.path.isdir(directory):
+        file_path = os.path.join(directory, filename)
+        #check file if exists
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+            print(f"Đã xóa: {file_path}")
+        else:
+            print(f"File không tồn tại: {file_path}")
     else:
         print(f"Thư mục không tồn tại: {directory}")
 
@@ -95,6 +108,12 @@ def ask_question():
         return render_template('upload.html', answers=answers, file_names=uploaded_file_names, chat_history=chat_history)
 
     return "Chưa có nội dung nào được phân tích.", 400
+
+@app.route('/delete_file', methods=['DELETE'])
+def delete_file():
+    filename = request.args.get('filename')
+    delete_file_in_directory(uploads_dir, filename)
+    return '', 204  # Trả về mã trạng thái 204 No Content
 
 def format_answer(text):
     print('Answer before format: ', text)
