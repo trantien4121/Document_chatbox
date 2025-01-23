@@ -6,13 +6,13 @@ import os
 app = Flask(__name__, static_url_path='/static')
 uploads_dir = os.path.join("resources", "input")
 
-# Tạo thư mục uploads nếu chưa tồn tại
+# Create new uploads forder if not exists
 os.makedirs(uploads_dir, exist_ok=True)
 
-# Biến toàn cục để lưu trữ nội dung đã phân tích và các câu hỏi, câu trả lời
+# Create global variable
 parsed_content = ""
 uploaded_file_name = ""
-chat_history = []  # Danh sách lưu trữ câu hỏi và câu trả lời
+chat_history = []  
 
 def reset_globals(): 
     global parsed_content, uploaded_file_name, chat_history 
@@ -69,15 +69,15 @@ def upload_file():
             file_path = os.path.join(uploads_dir, file.filename)
             file.save(file_path)
 
-            # Khởi tạo GeminiAI và ResumeParser
+            # Init GeminiAI và ResumeParser
             gemini = GeminiAI.get_instance()
             parser = ResumeParser(gemini)
 
-            # Phân tích nội dung file PDF
+            # Parse content from PDF file
             content = parser.extract_text_from_pdf(file_path)
             parsed_content.append(content)
             
-            # Lưu tên file đã tải lên
+            # Save fileName
             uploaded_file_names.append(file.filename)
             print(file.filename)
             print("===> Parsed_content size: ", len(parsed_content))
@@ -113,30 +113,22 @@ def ask_question():
 def delete_file():
     filename = request.args.get('filename')
     delete_file_in_directory(uploads_dir, filename)
-    return '', 204  # Trả về mã trạng thái 204 No Content
+    return '', 204  # 204 No Content
 
 def format_answer(text):
     print('Answer before format: ', text)
-    # Định dạng câu trả lời
-    text = text.strip()  # Xóa khoảng trắng thừa
-    # Thay thế * bằng xuống dòng
+    text = text.strip()  # Remove space 
     text = text.replace('* **', '<br/>')  
-    # Thay thế ** bằng dấu cách đôi
     text = text.replace('**', '  ')  
     print('Answer before format br: ', text)
-    lines = text.split('<br/>')  # Chia văn bản thành các dòng dựa trên <br/>
-    formatted_lines = ['<li>' + line.strip() + '</li>' for line in lines if line.strip()]  # Bọc mỗi dòng trong <li>
-    # Nối lại các dòng và thêm <ul>
-    # Lấy đoạn đầu tiên
+    lines = text.split('<br/>')  
+    formatted_lines = ['<li>' + line.strip() + '</li>' for line in lines if line.strip()]  
     first_line = lines[0].strip() if lines else ""
-    # Bọc các đoạn còn lại trong <li> và thêm <ul> ở đầu và </ul> ở cuối
-    formatted_lines = ['<li>' + line.strip() + '</li>' for line in lines[1:] if line.strip()]  # Bọc mỗi dòng sau trong <li>
-    
-    # Nối lại các dòng và thêm <ul> nếu có
+    formatted_lines = ['<li>' + line.strip() + '</li>' for line in lines[1:] if line.strip()]  
     if formatted_lines:
         return first_line + '<ul>' + ''.join(formatted_lines) + '</ul>'
     else:
-        return first_line  # Chỉ trả về đoạn đầu nếu không có dòng nào khác
+        return first_line 
 
 if __name__ == "__main__":
     app.run(debug=True, port=8050, host='0.0.0.0')

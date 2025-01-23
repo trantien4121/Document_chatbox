@@ -2,7 +2,7 @@ import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 
-# Tải các biến môi trường từ file .env
+# load environment variable from file .env
 load_dotenv()
 
 
@@ -15,9 +15,6 @@ class GeminiAI:
         genai.configure(api_key=api_key)
         self.instance = None
         self.model = genai.GenerativeModel(model_name)
-    #     self.prompt =  """<|im_start|>system\nBản là một trợ lí AI hữu ích về pháp luật. Hãy trả lời câu hỏi chính xác, nếu bạn không biết câu trả lời, hãy nói không biết, đừng cố tạo ra câu trả lời\n
-
-    # {context}<|im_end|>\n<|im_start|>user\n{question}<|im_end|>\n<|im_start|>assistant"""
         self.prompt = """
                 {content}
             Dựa vào nội dung bên trên, không cần tóm tắt nội dung tài liệu, trả lời chính xác cho câu hỏi:

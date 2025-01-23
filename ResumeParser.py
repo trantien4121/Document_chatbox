@@ -1,8 +1,11 @@
 from typing import BinaryIO
+from pdf2image import convert_from_path
 import os
 import pdfplumber
 import docx2txt
 import json
+import pytesseract
+
 
 from GeminiAI import GeminiAI
 
@@ -19,9 +22,18 @@ class ResumeParser:
             with pdfplumber.open(file) as pdf:
                 for page in pdf.pages:
                     page_text = page.extract_text()
-                    text += page_text if page_text else ""
+                    if page_text:
+                        text += page_text + "\n"
+                    else:
+                        # if pdf belong to scan image => convert to text
+                        images = convert_from_path(file, first_page=page.page_number, last_page=page.page_number)
+                        for image in images:
+                            page_text = pytesseract.image_to_string(image)
+                            text += page_text + "\n"
+        
         except Exception as e:
             print(f"Error extracting text from PDF: {e}")
+
         return text
 
     @classmethod

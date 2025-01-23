@@ -3,3 +3,5 @@ pdfplumber==0.11.4
 docx2txt==0.8
 python-dotenv==1.0.1
 flask
+pdf2image
+pytesseract
