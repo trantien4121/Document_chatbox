@@ -75,7 +75,7 @@ def upload_file():
 
             # Parse content from PDF file
             content = parser.extract_text_from_pdf(file_path)
-            parsed_content.append(content)
+            parsed_content.append({'content': content, 'file_name': file.filename})
             
             # Save fileName
             uploaded_file_names.append(file.filename)
@@ -97,10 +97,12 @@ def ask_question():
         gemini = GeminiAI.get_instance()
         answers = []
 
-        for content in parsed_content:
+        for item in parsed_content:
+            content = item['content']
+            file_name = item['file_name']
             answer = format_answer(gemini.explain_resume(content, question))
-            print(answer);
-            answers.append(answer)
+            print(answer)
+            answers.append({'answer': answer, 'originalFile': file_name})
 
         # Lưu câu hỏi và câu trả lời vào lịch sử chat
         chat_history.append({'question': question, 'answers': answers})
