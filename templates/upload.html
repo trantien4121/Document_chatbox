@@ -83,10 +83,15 @@
               <strong>Kết quả:</strong>
               <ul>
                 {% for answer in chat.answers %}
-                <li>
-                  <strong>File:</strong> {{ answer.originalFile }}<br />
-                  <strong>Answer:</strong> {{ answer.answer | safe }}
-                </li>
+                  {% if answer.originalFile != "all file" %}
+                    <li>
+                      <strong>Answer:</strong> {{ answer.answer | safe }} (từ <b>{{ answer.originalFile }}</b>)
+                    </li>
+                  {% else %}
+                    <li>
+                      <strong>Kết luận:</strong> {{ answer.answer | safe }}
+                    </li>
+                  {% endif %}
                 {% endfor %}
               </ul>
             </div>

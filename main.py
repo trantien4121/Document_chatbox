@@ -104,12 +104,26 @@ def ask_question():
             print(answer)
             answers.append({'answer': answer, 'originalFile': file_name})
 
+        answerText = []
+        for answerItem in answers:
+            answerText.append(answerItem['answer']);
+        
+        mergeAnswer = summarize_text(answerText, gemini);
+        answers.append({'answer': mergeAnswer, 'originalFile': "all file"})
+        
         # Lưu câu hỏi và câu trả lời vào lịch sử chat
         chat_history.append({'question': question, 'answers': answers})
 
         return render_template('upload.html', answers=answers, file_names=uploaded_file_names, chat_history=chat_history)
 
     return "Chưa có nội dung nào được phân tích.", 400
+
+def summarize_text(input_texts, gemini):
+    # Tiền xử lý input
+    input_text = " ".join(input_texts)
+    # Tóm tắt văn bản sử dụng mô hình của Gemini
+    summary = gemini.summarize(input_text)
+    return summary
 
 @app.route('/delete_file', methods=['DELETE'])
 def delete_file():
