@@ -38,7 +38,7 @@ class GeminiAI:
     
     def summarize(self, content):
         # Create a prompt for summarization
-        summarize_prompt = "Tóm tắt đoạn văn bản sau đây, tập trung vào các ý chính và bỏ qua chi tiết không quan trọng: {content}"
+        summarize_prompt = "Tóm tắt đoạn văn bản sau đây, lấy chuẩn sát nội dung và không thay thế bằng bất kỳ nội dung tổng quát nào khác, tập trung vào các ý chính và bỏ qua chi tiết không quan trọng, vừa lấy nội dung riêng, vừa lấy nội dung chung: {content}"
         model_content = summarize_prompt.replace("{content}", content)
         response = self.model.generate_content(model_content)
         return response.text
